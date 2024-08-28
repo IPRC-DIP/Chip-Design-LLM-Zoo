@@ -1,0 +1,649 @@
+<!doctype html>
+<html>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400&display=swap"
+    rel="stylesheet"
+  />
+
+  <head>
+    <meta charset="UTF-8" />
+    <title>Verilog LLM Leaderboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+    <link
+      rel="icon"
+      href="https://images.emojiterra.com/google/noto-emoji/unicode-15/color/1024px/1f9d1-1f4bb.png"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css"
+    />
+
+    <style>
+      body {
+        font-family: "JetBrains Mono", monospace;
+        background-color: #ffffff;
+        color: #000000;
+      }
+
+      #content {
+        width: 75%;
+      }
+
+      th,
+      td {
+        text-align: left;
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
+
+      #notes {
+        font-size: 1em;
+      }
+
+      #notes h3 {
+        margin-top: 1em;
+        font-size: 2em;
+        text-align: center;
+      }
+
+      #notes li {
+        font-size: 1.2em;
+        font-weight: 300;
+        margin: 1em;
+      }
+
+      .form-select {
+        font-size: 1em;
+      }
+
+      @media screen and (max-width: 1400px) {
+        body {
+          font-size: 1.6vw;
+        }
+
+        #content {
+          width: 100%;
+        }
+
+        h1 {
+          font-size: 2em;
+        }
+
+        h2 {
+          font-size: 1.6em;
+        }
+
+        h3 {
+          font-size: 1.2em;
+        }
+
+        table {
+          font-size: small;
+        }
+      }
+      #timeSlider {
+        width: 200%; /* 将宽度设置为原来的两倍 */
+      }
+      .time-slider-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px; /* 调整元素之间的间距 */
+      }
+    </style>
+  </head>
+
+  <body>
+    <div
+      id="content"
+      class="container-fluid d-flex flex-column align-items-center gap-3"
+    >
+      <h1 class="text-nowrap mt-5">🏆 Verilog LLM Leaderboard 🏆</h1>
+      <h3 class="fw-light text-nowrap">
+        <small id="warning"
+          >Comprehensive testing for large-scale Verilog models<br
+        /></small>
+      </h3>
+      <div class="btn-group" role="group" id="Benchmark">
+        <input
+          type="radio"
+          class="btn-check"
+          name="btnradio"
+          id="verilogeval_human"
+          checked
+        />
+        <label class="btn btn-outline-primary" for="verilogeval_human">verilogeval_human</label>
+        <input type="radio" class="btn-check" name="btnradio" id="verilogeval_machine" />
+        <label class="btn btn-outline-primary" for="verilogeval_machine">verilogeval_machine</label>
+        <input type="radio" class="btn-check" name="btnradio" id="RTLLM_V1_0_Syntax" />
+        <label class="btn btn-outline-primary" for="RTLLM_V1_0_Syntax">RTLLM_V1_0_Syntax</label>
+        <input type="radio" class="btn-check" name="btnradio" id="RTLLM_V1_0_Func" />
+        <label class="btn btn-outline-primary" for="RTLLM_V1_0_Func">RTLLM_V1_0_Func</label>
+        <input type="radio" class="btn-check" name="btnradio" id="RTLLM_V1_1_Syntax" />
+        <label class="btn btn-outline-primary" for="RTLLM_V1_1_Syntax">RTLLM_V1_1_Syntax</label>
+        <input type="radio" class="btn-check" name="btnradio" id="RTLLM_V1_1_Func" />
+        <label class="btn btn-outline-primary" for="RTLLM_V1_1_Func">RTLLM_V1_1_Func</label>
+      </div>
+      <div id="chart" style="width: 90%; height: 600px"></div>
+      <div class="time-slider-container">
+        <label for="timeSlider">TimeLine:</label>
+        <input type="range" id="timeSlider" min="0" max="0" value="0" step="1">
+        <span id="timeValue">0</span>
+      </div>
+      <div class="container-fluid d-flex flex-row flex-nowrap">
+        <div class="container-fluid d-flex flex-column align-items-center">
+          <label for="plused" class="text-success mb-3" id="label1"
+            >⚡Verilog-Eval Machine Tests⚡</label
+          >
+          <table
+            id="plused"
+            class="table table-responsive table-striped table-bordered flex-shrink-1 border border-success border-3"
+          ></table>
+        </div>
+        <div class="container-fluid d-flex flex-column align-items-center">
+          <label for="origin" class="text-danger mb-3"  id="label2">
+            ⚡Verilog-Eval Human Tests⚡
+          </label>
+          <table
+            id="origin"
+            class="table table-responsive table-striped table-bordered flex-shrink-1 border border-danger border-3"
+          ></table>
+        </div>
+      </div>
+      <div id="notes">
+        <h3>📝 Notes</h3>
+        <div class="inline-block mt-3">
+          <ol>
+            <li>
+              Evaluated using
+              <a href="https://github.com/NVlabs/verilog-eval"
+                >VerilogEval</a
+              >;
+              <a href="https://github.com/hkust-zhiyao/RTLLM/tree/v1.0">RTLLM</a>
+              version 1.0;
+              <a href="https://github.com/hkust-zhiyao/RTLLM/tree/main">RTLLM</a>
+              version 1.1;.
+            </li>
+            <li>
+              Models are ranked according to pass@1 in VerilogEval and correct rate in RTLLM.
+            </li>
+            <li>
+              ✨ marks models evaluated using a chat setting, while others
+              perform direct code completion.
+            </li>
+            <li>
+              Model providers have the responsibility to avoid data
+              contamination. Models trained on close data can be affected by
+              contamination.
+            </li>
+            <li>
+              💚 means open weights and open data. 💙 means open weights and
+              open SFT data, but the base model is not data-open. What does this
+              imply? 💚💙 models open-source the data such that one can
+              concretely reason about contamination.
+            </li>
+            <li>
+              "Size" here is the amount of activated model weight during
+              inference.
+            </li>
+          </ol>
+        </div>
+      </div>
+      <div id="notes">
+        <h3>🙏 Acknowledgements</h3>
+        <div class="inline-block mt-3">
+          <ul>
+            <li>
+              We thank the EvalPlus team for providing <a href="https://evalplus.github.io/leaderboard.html">the leaderboard</a> template.
+            </li>
+            <li>
+              We are grateful for the significant contributions to the Verilog LLM Leaderboard.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const originTable = document.getElementById("origin");
+      const plusedTable = document.getElementById("plused");
+      const benchmarkRadio = document.getElementById("Benchmark");
+      const chartDom = document.getElementById("chart");
+      var chart = echarts.init(chartDom);
+
+      const dataUrl = "results_verilog.json";
+
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "results_verilog.json", false); // false makes the request synchronous
+      xhr.send();
+
+      var data;
+      if (xhr.status === 200) {
+        data = JSON.parse(xhr.responseText);
+        data = Object.keys(data).map((key) => {
+          return {
+            Model: key,
+            ...data[key],
+          };
+        });
+      } else {
+        alert("Failed to load data from results.json");
+      }
+      const globalData = data;
+
+      const clearTable = () => {
+        originTable.innerHTML = "";
+        plusedTable.innerHTML = "";
+      };
+
+      const clearChart = () => {
+        chartOption.xAxis.data = [];
+        chartOption.series[0].data = [];
+        chartOption.series[1].data = [];
+        chartOption.series[0].markLine.data = [];
+        chartOption.series[1].markLine.data = [];
+      };
+
+      var chartOption = {
+        legend: {
+          data: ["pass@1*"],
+        },
+        grid: {
+          left: "1%",
+          right: "4%",
+          bottom: "3%",
+          containLabel: true,
+        },
+        xAxis: {
+          name: "Act. Size",
+          type: "category",
+          boundaryGap: false,
+          data: [],
+          axisLabel: {
+            formatter: function (value) {
+              return value + "B";
+            },
+          },
+        },
+        yAxis: {
+          name: "PASS@1 (greedy decoding)",
+          type: "value",
+          show: true,
+          nameTextStyle: {
+            align: "left",
+          },
+          splitLine: {
+            show: true,
+            lineStyle: {
+              type: "dashed",
+            },
+          },
+        },
+        legend: {
+          data: ["base", "instructed"],
+          itemStyle: {
+            opacity: 1.0,
+          },
+        },
+        tooltip: {
+          trigger: "item",
+          axisPointer: {
+            type: "cross",
+          },
+        },
+        series: [
+          {
+            name: "base",
+            type: "scatter",
+            data: [],
+            itemStyle: {
+              color: "#91cc75",
+              opacity: 0.2,
+            },
+            emphasis: {
+              focus: "series",
+            },
+            lineStyle: {
+              width: 2,
+            },
+            markLine: {
+              symbol: "none",
+              emphasis: {
+                label: {
+                  position: "middle",
+                  formatter: function (params) {
+                    return params.data.name;
+                  },
+                },
+              },
+              data: [],
+            },
+          },
+          {
+            name: "instructed",
+            type: "scatter",
+            data: [],
+            itemStyle: {
+              color: "#5470c6",
+              opacity: 0.2,
+            },
+            emphasis: {
+              focus: "series",
+            },
+            lineStyle: {
+              width: 2,
+            },
+            markLine: {
+              symbol: "none",
+              emphasis: {
+                label: {
+                  position: "middle",
+                  formatter: function (params) {
+                    return params.data.name;
+                  },
+                },
+              },
+              data: [],
+            },
+          },
+        ],
+      };
+
+      var theaders = ["Model", "pass@1"];
+      const theaders1 = ["Model", "pass@1(%)"];
+      const theaders2 = ["Model", "Syntax(%)"];
+      const theaders3 = ["Model", "Func(%)"];
+      const label1Element = document.getElementById("label1")
+      const label2Element = document.getElementById("label2")
+
+      const displayTable = (table, score) => {
+        if (score.includes("verilogeval")) {
+          label1Element.textContent = "⚡Verilog-Eval Machine Tests⚡"
+          label2Element.textContent = "⚡Verilog-Eval Human Tests⚡"
+          
+        } else if (score.includes("RTLLM_V1_0")) {
+          label1Element.textContent = "⚡RTLLM V1.0 Syntax Tests⚡"
+          label2Element.textContent = "⚡RTLLM V1.0 Func Tests⚡"
+          
+        } else {
+          label1Element.textContent = "⚡RTLLM V1.1 Syntax Tests⚡"
+          label2Element.textContent = "⚡RTLLM V1.1 Func Tests⚡"
+        }
+        
+        if (score.includes("verilogeval")) {
+          theaders = theaders1
+        } else if (score.includes("Syntax")) {
+          theaders = theaders2
+        } else {
+          theaders = theaders3
+        }
+
+        data = globalData
+          .filter((row) => {
+            return row["pass@1"][score] != null && row["time"] <= timeSlider.value;
+          })
+          .sort((a, b) => {
+            return b["pass@1"][score] - a["pass@1"][score];
+          });
+        var thead = document.createElement("thead");
+        var headerRow = document.createElement("tr");
+        var th = document.createElement("th");
+        th.textContent = "#";
+        headerRow.appendChild(th);
+        theaders.forEach(function (header) {
+          var th = document.createElement("th");
+          th.textContent = header;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        var tbody = document.createElement("tbody");
+        var rank = 1;
+        data.forEach((row) => {
+          var dataRow = document.createElement("tr");
+          var rankCell = document.createElement("td");
+          rankCell.textContent = rank;
+          dataRow.appendChild(rankCell);
+          var modelCell = document.createElement("td");
+          if (rank == 1) {
+            modelCell.textContent = "🥇 ";
+          } else if (rank == 2) {
+            modelCell.textContent = "🥈 ";
+          } else if (rank == 3) {
+            modelCell.textContent = "🥉 ";
+          } else {
+            modelCell.textContent = "";
+          }
+          rank++;
+          var modelLink = document.createElement("a");
+          modelLink.href = row["link"];
+          modelLink.textContent = row["Model"];
+          modelLink.classList.add("link-underline-primary");
+          modelLink.classList.add("text-nowrap");
+          modelCell.appendChild(modelLink);
+          modelCell.classList.add("d-flex");
+          modelCell.classList.add("flex-nowrap");
+          var prompted = row["prompted"];
+          var opendata = row["open-data"];
+          if (prompted) {
+            var promptedSymbol = document.createElement("span");
+            promptedSymbol.textContent = "✨";
+            modelCell.appendChild(promptedSymbol);
+          }
+          if (opendata.toUpperCase() == "FULL") {
+            var promptedSymbol = document.createElement("span");
+            promptedSymbol.textContent = "💚";
+            modelCell.appendChild(promptedSymbol);
+          } else if (opendata.toUpperCase() == "PARTIAL") {
+            var promptedSymbol = document.createElement("span");
+            promptedSymbol.textContent = "💙";
+            modelCell.appendChild(promptedSymbol);
+          }
+          dataRow.appendChild(modelCell);
+          var passCell = document.createElement("td");
+          if (table == originTable) {
+            passCell.classList.add("text-danger");
+          } else if (table == plusedTable) {
+            passCell.textContent = "⚡";
+            passCell.classList.add("text-success");
+          }
+          passCell.textContent += row["pass@1"][score];
+          dataRow.appendChild(passCell);
+          tbody.appendChild(dataRow);
+        });
+        table.appendChild(tbody);
+      };
+
+      const displayChart = (score) => {
+        const data = globalData
+          .filter((model) => {
+            return model["pass@1"][score] != null && model["time"] <= timeSlider.value;
+          })
+          .sort((a, b) => {
+            return b["pass@1"][score] - a["pass@1"][score];
+          });
+
+        const sizeList = [
+          ...new Set(
+            data
+              .filter((model) => model["size"] != null)
+              .map((model) => Math.round(model["size"])),
+          ),
+        ].sort((a, b) => {
+          return a - b;
+        });
+
+        chartOption.xAxis.data = sizeList;
+        chartOption.yAxis.max =
+          1 + Math.max(...data.map((model) => model["pass@1"][score]));
+
+        const nonPromptedModels = data.filter(
+          (model) => model["prompted"] == false,
+        );
+        const promptedModels = data.filter(
+          (model) => model["prompted"] == true,
+        );
+
+        [nonPromptedModels, promptedModels].forEach((series, idx) => {
+          series.forEach((model) => {
+            if (model["size"] == null) {
+              chartOption.series[idx].markLine.data.push({
+                name: model["Model"],
+                yAxis: model["pass@1"][score],
+              });
+            } else {
+              chartOption.series[idx].data.push({
+                name: model["Model"],
+                value: [`${Math.round(model["size"])}`, model["pass@1"][score]],
+              });
+            }
+          });
+        });
+
+        const offsets = [[50, 0]]
+          .concat(Array.from({ length: sizeList.length - 2 }, () => [0, 0]))
+          .concat([[-50, 0]]);
+        sizeList.forEach((size, idx) => {
+          const bestNonPromptedModel = nonPromptedModels
+            .filter((model) => Math.round(model["size"]) == size)
+            .sort((a, b) => {
+              return b["pass@1"][score] - a["pass@1"][score];
+            })[0];
+          const bestPromptedModel = promptedModels
+            .filter((model) => Math.round(model["size"]) == size)
+            .sort((a, b) => {
+              return b["pass@1"][score] - a["pass@1"][score];
+            })[0];
+          const hightLightBest = (series, model) => {
+            const point = chartOption.series[series].data.find(
+              (point) => point.name == model["Model"],
+            );
+            if (point) {
+                point.itemStyle = {
+                opacity: 1.0,
+              };
+              point.label = {
+                show: true,
+                position: "top",
+                offset: offsets[idx],
+                formatter: function (params) {
+                  return params.data.name;
+                },
+                color: "inherit",
+              };
+            }
+          };
+            
+          if (bestNonPromptedModel) {
+            hightLightBest(0, bestNonPromptedModel);
+          }
+          if (bestPromptedModel) {
+            hightLightBest(1, bestPromptedModel);
+          }
+        });
+
+        var chart = echarts.init(chartDom);
+        chart.setOption(chartOption);
+      };
+
+      const verilogeval_humanRadio = document.getElementById("verilogeval_human");
+      const verilogeval_machineRadio = document.getElementById("verilogeval_machine");
+      const rtllm1syntaxRadio = document.getElementById("RTLLM_V1_0_Syntax")
+      const rtllm1funcRadio = document.getElementById("RTLLM_V1_0_Func")
+      const rtllm11syntaxRadio = document.getElementById("RTLLM_V1_1_Syntax")
+      const rtllm11funcRadio = document.getElementById("RTLLM_V1_1_Func")
+
+      verilogeval_humanRadio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "verilogeval_human");
+        displayTable(plusedTable, "verilogeval_machine");
+        clearChart();
+        displayChart("verilogeval_human");
+      });
+
+      verilogeval_machineRadio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "verilogeval_human");
+        displayTable(plusedTable, "verilogeval_machine");
+        clearChart();
+        displayChart("verilogeval_machine");
+      });
+
+      rtllm1syntaxRadio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "RTLLM_V1_0_Func");
+        displayTable(plusedTable, "RTLLM_V1_0_Syntax");
+        clearChart();
+        displayChart("RTLLM_V1_0_Syntax");
+      });
+
+      rtllm1funcRadio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "RTLLM_V1_0_Func");
+        displayTable(plusedTable, "RTLLM_V1_0_Syntax");
+        clearChart();
+        displayChart("RTLLM_V1_0_Func");
+      });
+
+      rtllm11syntaxRadio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "RTLLM_V1_1_Func");
+        displayTable(plusedTable, "RTLLM_V1_1_Syntax");
+        clearChart();
+        displayChart("RTLLM_V1_1_Syntax");
+      });
+
+      rtllm11funcRadio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "RTLLM_V1_1_Func");
+        displayTable(plusedTable, "RTLLM_V1_1_Syntax");
+        clearChart();
+        displayChart("RTLLM_V1_1_Func");
+      });
+
+      const timeSlider = document.getElementById("timeSlider");
+      const timeValue = document.getElementById("timeValue");
+
+      const timeValues = [...new Set(globalData.map(item => item.time))]
+                          .filter(time => time !== 0)
+                          .sort((a, b) => a - b);
+      // 计算 timeValues 数组中相邻元素的差值的最小值
+      const minStep = Math.min(...timeValues.slice(1).map((value, index) => value - timeValues[index]));
+
+      timeSlider.min = Math.min(...timeValues);
+      timeSlider.max = Math.max(...timeValues);
+      timeSlider.step = 1;
+      timeSlider.value = timeSlider.max;
+      timeValue.textContent = timeSlider.value;
+
+      timeSlider.addEventListener("input", function () {
+        // 四舍五入到最近的 timeValues 数组中的值
+        const closestTime = timeValues.reduce((prev, curr) => {
+          return (Math.abs(curr - timeSlider.value) < Math.abs(prev - timeSlider.value) ? curr : prev);
+        });
+
+        timeSlider.value = closestTime;
+        timeValue.textContent = timeSlider.value;
+
+        const selectedScore = document.querySelector('input[name="btnradio"]:checked').id;
+        clearTable();
+        clearChart();
+        displayTable(originTable, selectedScore);
+        displayTable(plusedTable, selectedScore);
+        displayChart(selectedScore);
+      });
+
+      verilogeval_humanRadio.click();
+
+      window.addEventListener("resize", () => {
+        this.chart.resize();
+      });
+    </script>
+  </body>
+</html>
