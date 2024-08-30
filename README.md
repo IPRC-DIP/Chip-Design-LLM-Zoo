@@ -1,6 +1,6 @@
-# AwesomeChipDesignLeaderBoard
+# Chip Design LLM Zoo
 
-[Chip Design LLM Zoo](https://iprc-dip.github.io/AwesomeChipDesignLeaderBoard): A curated list summarizing current large models for Verilog generation, primarily aimed at evaluating large models used in Verilog code generation tasks.
+[Chip Design LLM Zoo](https://iprc-dip.github.io/Chip-Design-LLM-Zoo/): A curated list summarizing current large models for Verilog generation, primarily aimed at evaluating large models used in Verilog code generation tasks.
 
 ## The Goal of this Repository
 
