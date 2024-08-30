@@ -2,14 +2,12 @@
 
 [Chip Design LLM Zoo](https://iprc-dip.github.io/AwesomeChipDesignLeaderBoard): A curated list summarizing current large models for Verilog generation, primarily aimed at evaluating large models used in Verilog code generation tasks.
 
-The goal of this repository is:
+## The goal of this repository
 
 - To keep on track of state-of-the-art (SoTA) in Verilog generation tasks.
 - To see a comparison of famous Verilog models at a glance (performance, size, etc.).
 - To access their research papers.
 
-## Cite
-If our project is helpful to you, please cite our project.
 
 ## 🙏Acknowledgements
 
