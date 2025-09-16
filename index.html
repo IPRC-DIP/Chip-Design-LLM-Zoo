@@ -95,6 +95,37 @@
         align-items: center;
         gap: 10px; /* 调整元素之间的间距 */
       }
+
+      /* 新增的按钮组样式 */
+      #Benchmark {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        max-width: 100%;
+      }
+
+      #Benchmark .btn {
+        flex: 0 0 auto;
+        margin: 2px;
+        white-space: nowrap;
+        min-width: fit-content;
+      }
+
+      /* 响应式调整 */
+      @media screen and (max-width: 1200px) {
+        #Benchmark .btn {
+          font-size: 0.9em;
+          padding: 0.375rem 0.5rem;
+        }
+      }
+
+      @media screen and (max-width: 768px) {
+        #Benchmark .btn {
+          font-size: 0.8em;
+          padding: 0.25rem 0.4rem;
+        }
+      }
     </style>
   </head>
 
@@ -122,6 +153,28 @@
         <label class="btn btn-outline-primary" for="RTLLM_V1_0_Syntax">RTLLM V1.0 Syntax</label>
         <input type="radio" class="btn-check" name="btnradio" id="RTLLM_V1_0_Func" />
         <label class="btn btn-outline-primary" for="RTLLM_V1_0_Func">RTLLM V1.0 Func</label>
+        <input type="radio" class="btn-check" name="btnradio" id="RTLLM_V1_1_Syntax_pass@5" />
+        <label class="btn btn-outline-primary" for="RTLLM_V1_1_Syntax_pass@5">RTLLM V1.1 Syntax Pass@5</label>
+        <input type="radio" class="btn-check" name="btnradio" id="RTLLM_V1_1_Func_pass@5" />
+        <label class="btn btn-outline-primary" for="RTLLM_V1_1_Func_pass@5">RTLLM V1.1 Func Pass@5</label>
+        <input type="radio" class="btn-check" name="btnradio" id="RTLLM_V2_Syntax" />
+        <label class="btn btn-outline-primary" for="RTLLM_V2_Syntax">RTLLM V2 Syntax</label>
+        <input type="radio" class="btn-check" name="btnradio" id="RTLLM_V2_Func" />
+        <label class="btn btn-outline-primary" for="RTLLM_V2_Func">RTLLM V2 Func</label>
+        <input type="radio" class="btn-check" name="btnradio" id="RTLLM_V2_Syntax_pass@5" />
+        <label class="btn btn-outline-primary" for="RTLLM_V2_Syntax_pass@5">RTLLM V2 Syntax Pass@5</label>
+        <input type="radio" class="btn-check" name="btnradio" id="RTLLM_V2_Func_pass@5" />
+        <label class="btn btn-outline-primary" for="RTLLM_V2_Func_pass@5">RTLLM V2 Func Pass@5</label>
+        <input type="radio" class="btn-check" name="btnradio" id="verilogeval_V2" />
+        <label class="btn btn-outline-primary" for="verilogeval_V2">VerilogEval V2</label>
+        <input type="radio" class="btn-check" name="btnradio" id="realbench_module_syntax" />
+        <label class="btn btn-outline-primary" for="realbench_module_syntax">RealBench Module Syntax</label>
+        <input type="radio" class="btn-check" name="btnradio" id="realbench_module_func" />
+        <label class="btn btn-outline-primary" for="realbench_module_func">RealBench Module Func</label>
+        <input type="radio" class="btn-check" name="btnradio" id="realbench_system_syntax" />
+        <label class="btn btn-outline-primary" for="realbench_system_syntax">RealBench System Syntax</label>
+        <input type="radio" class="btn-check" name="btnradio" id="realbench_system_func" />
+        <label class="btn btn-outline-primary" for="realbench_system_func">RealBench System Func</label>
       </div>
       <div id="chart" style="width: 90%; height: 600px"></div>
       <div class="size-slider-container">
@@ -155,13 +208,14 @@
           <ol>
             <li>
               Evaluated using
-              <a href="https://github.com/NVlabs/verilog-eval"
-                >VerilogEval</a
-              >;
+              <a href="https://github.com/NVlabs/verilog-eval">VerilogEval</a>;
+              <a href="https://github.com/NVlabs/verilog-eval">VerilogEval</a>version 2;
               <a href="https://github.com/hkust-zhiyao/RTLLM/tree/v1.0">RTLLM</a>
               version 1.0;
               <a href="https://github.com/hkust-zhiyao/RTLLM/tree/main">RTLLM</a>
-              version 1.1;.
+              version 1.1;
+              <a href="https://github.com/hkust-zhiyao/RTLLM/tree/main">RTLLM</a>
+              version 2.0;.
             </li>
             <li>
               Models are ranked according to pass@1 in VerilogEval and correct rate in RTLLM.
@@ -211,23 +265,125 @@
       const chartDom = document.getElementById("chart");
       var chart = echarts.init(chartDom);
 
-      const dataUrl = "results_verilog.json";
+      // const dataUrl = "results_verilog.json";
 
+      // var xhr = new XMLHttpRequest();
+      // xhr.open("GET", "results_verilog.json", false); // false makes the request synchronous
+      // xhr.send();
+
+      // var data;
+      // if (xhr.status === 200) {
+      //   data = JSON.parse(xhr.responseText);
+      //   data = Object.keys(data).map((key) => {
+      //     return {
+      //       Model: key,
+      //       ...data[key],
+      //     };
+      //   });
+      // } else {
+      //   alert("Failed to load data from results.json");
+      // }
+      // const globalData = data;
+      const dataUrl = "results_verilog.csv";
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", "results_verilog.json", false); // false makes the request synchronous
+      xhr.open("GET", "results_verilog.csv", false);
       xhr.send();
 
       var data;
       if (xhr.status === 200) {
-        data = JSON.parse(xhr.responseText);
-        data = Object.keys(data).map((key) => {
-          return {
-            Model: key,
-            ...data[key],
-          };
-        });
+          function parseCSV(text) {
+              const lines = text.trim().split('\n');
+              const result = [];
+              
+              for (let line of lines) {
+                  const row = [];
+                  let current = '';
+                  let inQuotes = false;
+                  
+                  for (let i = 0; i < line.length; i++) {
+                      const char = line[i];
+                      
+                      if (char === '"') {
+                          inQuotes = !inQuotes;
+                      } else if (char === ',' && !inQuotes) {
+                          row.push(current.trim());
+                          current = '';
+                      } else {
+                          current += char;
+                      }
+                  }
+                  row.push(current.trim());
+                  result.push(row);
+              }
+              
+              return result;
+          }
+          
+          const csvData = parseCSV(xhr.responseText);
+          const headers = csvData[0];
+          const jsonData = {};
+          
+          for (let i = 1; i < csvData.length; i++) {
+              const values = csvData[i];
+              const modelName = values[0];
+              
+              function parseValue(value, type = 'string') {
+                  if (value === 'null' || value === '' || value === undefined) {
+                      return null;
+                  }
+                  
+                  switch (type) {
+                      case 'boolean':
+                          return value === 'true';
+                      case 'float':
+                          const floatVal = parseFloat(value);
+                          return isNaN(floatVal) ? null : floatVal;
+                      case 'int':
+                          const intVal = parseInt(value);
+                          return isNaN(intVal) ? null : intVal;
+                      default:
+                          return value;
+                  }
+              }
+              
+              jsonData[modelName] = {
+                  "link": parseValue(values[1]),
+                  "open-data": parseValue(values[2]),
+                  "prompted": parseValue(values[3], 'boolean'),
+                  "size": parseValue(values[4], 'float'),
+                  "time": parseValue(values[5], 'int'),
+                  "pass@1": {
+                      "verilogeval_machine": parseValue(values[6], 'float'),
+                      "verilogeval_human": parseValue(values[7], 'float'),
+                      "RTLLM_V1_0_Syntax": parseValue(values[8], 'float'),
+                      "RTLLM_V1_0_Func": parseValue(values[9], 'float'),
+                      "RTLLM_V1_1_Syntax": parseValue(values[10], 'float'),
+                      "RTLLM_V1_1_Func": parseValue(values[11], 'float'),
+                      "RTLLM_V1_1_Syntax_pass@5": parseValue(values[12], 'float'),
+                      "RTLLM_V1_1_Func_pass@5": parseValue(values[13], 'float'),
+                      "RTLLM_V2_Syntax": parseValue(values[14], 'float'),
+                      "RTLLM_V2_Func": parseValue(values[15], 'float'),
+                      "RTLLM_V2_Syntax_pass@5": parseValue(values[16], 'float'),
+                      "RTLLM_V2_Func_pass@5": parseValue(values[17], 'float'),
+                      "verilogeval_V2": parseValue(values[18], 'float'),
+                      "realbench_module_syntax":parseValue(values[19],'float'),
+                      "realbench_module_func":parseValue(values[20],'float'),
+                      "realbench_system_syntax":parseValue(values[21],'float'),
+                      "realbench_system_func":parseValue(values[22],'float'),
+                  }
+              };
+          }
+          
+          data = Object.keys(jsonData).map((key) => {
+              return {
+                  Model: key,
+                  ...jsonData[key],
+              };
+          });
+          
+          console.log("Parsed data:", data);
       } else {
-        alert("Failed to load data from results.json");
+          alert("Failed to load data from results_verilog.csv");
       }
       const globalData = data;
 
@@ -611,6 +767,17 @@
       const rtllm1funcRadio = document.getElementById("RTLLM_V1_0_Func")
       const rtllm11syntaxRadio = document.getElementById("RTLLM_V1_1_Syntax")
       const rtllm11funcRadio = document.getElementById("RTLLM_V1_1_Func")
+      const rtllm11syntaxPass5Radio = document.getElementById("RTLLM_V1_1_Syntax_pass@5");
+      const rtllm11funcPass5Radio = document.getElementById("RTLLM_V1_1_Func_pass@5");
+      const rtllm2syntaxRadio = document.getElementById("RTLLM_V2_Syntax");
+      const rtllm2funcRadio = document.getElementById("RTLLM_V2_Func");
+      const rtllm2syntaxPass5Radio = document.getElementById("RTLLM_V2_Syntax_pass@5");
+      const rtllm2funcPass5Radio = document.getElementById("RTLLM_V2_Func_pass@5");
+      const verilogevalV2Radio = document.getElementById("verilogeval_V2");
+      const realbenchModuleSyntaxRadio = document.getElementById("realbench_module_syntax");
+      const realbenchModuleFuncRadio = document.getElementById("realbench_module_func");
+      const realbenchSystemSyntaxRadio = document.getElementById("realbench_system_syntax");
+      const realbenchSystemFuncRadio = document.getElementById("realbench_system_func");
 
       verilogeval_humanRadio.addEventListener("click", function () {
         clearTable();
@@ -660,6 +827,92 @@
         displayChart("RTLLM_V1_1_Func");
       });
 
+      rtllm11syntaxPass5Radio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "RTLLM_V1_1_Func_pass@5");
+        displayTable(plusedTable, "RTLLM_V1_1_Syntax_pass@5");
+        clearChart();
+        displayChart("RTLLM_V1_1_Syntax_pass@5");
+      });
+
+      rtllm11funcPass5Radio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "RTLLM_V1_1_Func_pass@5");
+        displayTable(plusedTable, "RTLLM_V1_1_Syntax_pass@5");
+        clearChart();
+        displayChart("RTLLM_V1_1_Func_pass@5");
+      });
+
+      rtllm2syntaxRadio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "RTLLM_V2_Func");
+        displayTable(plusedTable, "RTLLM_V2_Syntax");
+        clearChart();
+        displayChart("RTLLM_V2_Syntax");
+      });
+
+      rtllm2funcRadio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "RTLLM_V2_Func");
+        displayTable(plusedTable, "RTLLM_V2_Syntax");
+        clearChart();
+        displayChart("RTLLM_V2_Func");
+      });
+
+      rtllm2syntaxPass5Radio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "RTLLM_V2_Func_pass@5");
+        displayTable(plusedTable, "RTLLM_V2_Syntax_pass@5");
+        clearChart();
+        displayChart("RTLLM_V2_Syntax_pass@5");
+      });
+
+      rtllm2funcPass5Radio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "RTLLM_V2_Func_pass@5");
+        displayTable(plusedTable, "RTLLM_V2_Syntax_pass@5");
+        clearChart();
+        displayChart("RTLLM_V2_Func_pass@5");
+      });
+
+      verilogevalV2Radio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "verilogeval_V2");
+        clearChart();
+        displayChart("verilogeval_V2");
+      });
+
+      realbenchModuleSyntaxRadio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "realbench_module_func");
+        displayTable(plusedTable, "realbench_module_syntax");
+        clearChart();
+        displayChart("realbench_module_syntax");
+      });
+
+      realbenchModuleFuncRadio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "realbench_module_func");
+        displayTable(plusedTable, "realbench_module_syntax");
+        clearChart();
+        displayChart("realbench_module_func");
+      });
+
+      realbenchSystemSyntaxRadio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "realbench_system_func");
+        displayTable(plusedTable, "realbench_system_syntax");
+        clearChart();
+        displayChart("realbench_system_syntax");
+      });
+
+      realbenchSystemFuncRadio.addEventListener("click", function () {
+        clearTable();
+        displayTable(originTable, "realbench_system_func");
+        displayTable(plusedTable, "realbench_system_syntax");
+        clearChart();
+        displayChart("realbench_system_func");
+      });
       const sizeSlider = document.getElementById("sizeSlider");
       const sizeValue = document.getElementById("sizeValue");
 
